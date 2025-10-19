@@ -4,7 +4,6 @@ import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2 } from "lucide-react";
 import {
   flexRender,
@@ -34,6 +33,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import { usePayments } from "@/contexts/PaymentsContext";
+import type { Payment } from "@/data/payments/columns";
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -43,6 +45,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  const { deletePayments, isLoading } = usePayments();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -50,6 +53,7 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const table = useReactTable({
     data,
@@ -73,11 +77,18 @@ export function DataTable<TData, TValue>({
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const hasSelectedRows = selectedRows.length > 0;
 
-  const handleDeleteSelected = () => {
-    // Aquí puedes implementar la lógica para eliminar los registros seleccionados
-    console.log("Deleting selected rows:", selectedRows);
-    // Por ahora solo limpiamos la selección
-    table.resetRowSelection();
+  const handleDeleteSelected = async () => {
+    setIsDeleting(true);
+    try {
+      const ids = selectedRows.map((row) => (row.original as Payment).id);
+      await deletePayments(ids);
+      table.resetRowSelection();
+    } catch (error) {
+      console.error("Failed to delete payments:", error);
+      // Error is already handled in context
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -97,9 +108,10 @@ export function DataTable<TData, TValue>({
             size="sm"
             onClick={handleDeleteSelected}
             className="gap-2"
+            disabled={isDeleting || isLoading}
           >
             <Trash2 className="h-4 w-4" />
-            Delete ({selectedRows.length})
+            {isDeleting ? "Deleting..." : `Delete (${selectedRows.length})`}
           </Button>
         )}
         <DropdownMenu>
@@ -173,7 +185,7 @@ export function DataTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    {isLoading ? "Loading payments..." : "No payments found. Add one using the form."}
                   </TableCell>
                 </TableRow>
               )}

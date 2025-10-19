@@ -106,12 +106,6 @@ export const columns: ColumnDef<Payment>[] = [
       const payment = row.original;
       const [isEditOpen, setIsEditOpen] = React.useState(false);
 
-      const handleSave = (updatedPayment: Payment) => {
-        console.log("Payment updated:", updatedPayment);
-        // Aquí puedes implementar la lógica para actualizar el pago
-        // Por ejemplo, llamar a una API o actualizar el estado
-      };
-
       return (
         <>
           <DropdownMenu>
@@ -143,7 +137,6 @@ export const columns: ColumnDef<Payment>[] = [
             payment={payment}
             open={isEditOpen}
             onOpenChange={setIsEditOpen}
-            onSave={handleSave}
           />
         </>
       );

@@ -20,29 +20,38 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { Payment } from "@/data/payments/columns"
+import { usePayments } from "@/contexts/PaymentsContext"
 
 interface EditPaymentDialogProps {
   payment: Payment
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSave?: (payment: Payment) => void
 }
 
 export function EditPaymentDialog({
   payment,
   open,
   onOpenChange,
-  onSave,
 }: EditPaymentDialogProps) {
+  const { updatePayment } = usePayments()
   const [formData, setFormData] = React.useState<Payment>(payment)
+  const [isUpdating, setIsUpdating] = React.useState(false)
 
   React.useEffect(() => {
     setFormData(payment)
   }, [payment])
 
-  const handleSave = () => {
-    onSave?.(formData)
-    onOpenChange(false)
+  const handleSave = async () => {
+    setIsUpdating(true)
+    try {
+      await updatePayment(payment.id, formData)
+      onOpenChange(false)
+    } catch (error) {
+      console.error("Failed to update payment:", error)
+      // Error is already handled in context
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   return (
@@ -123,10 +132,12 @@ export function EditPaymentDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isUpdating}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save changes</Button>
+          <Button onClick={handleSave} disabled={isUpdating}>
+            {isUpdating ? "Saving..." : "Save changes"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
