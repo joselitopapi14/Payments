@@ -120,7 +120,7 @@ export function FieldDemo() {
                   id="payment-amount"
                   type="number"
                   placeholder="100.00"
-                  step="0.01"
+                  step="50"
                   min="0"
                   required
                   className="overflow-hidden"
